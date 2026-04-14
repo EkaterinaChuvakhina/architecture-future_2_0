@@ -2,13 +2,9 @@ name: Terraform CI/CD — Yandex Object Storage
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'Task2Advanced/envs/**'
+    branches: [main, future_2_0]          # ← замени develop на название своей ветки
   pull_request:
-    branches: [ main ]
-    paths:
-      - 'Task2Advanced/envs/**'
+    branches: [main, future_2_0]          # ← то же самое
   workflow_dispatch:
     inputs:
       environment:
