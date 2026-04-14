@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket                      = "future-tfstate"
-    key                         = "task2advanced/stage/terraform.tfstate"
+    key                         = "task2advanced/prod/terraform.tfstate"
     region                      = "ru-central1"
 
     endpoints = {
