@@ -1,0 +1,9 @@
+cloud_id  = "b1gp5e573p3jllj14bsk"
+folder_id = "b1gu25ue3271hbvs1hlg"
+vm_name   = "dev-vm"
+cores     = 2
+memory    = 2
+disk_size = 10
+subnet_id = "e9bmlviob9bqlblsu0l3"
+zone      = "ru-central1-a"
+image_id  = "fd8r71tg4mg5b3uiholm"

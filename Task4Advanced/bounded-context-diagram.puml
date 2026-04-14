@@ -1,0 +1,67 @@
+@startuml bounded-contexts
+title Будущее 2.0 — Bounded Contexts
+
+skinparam rectangle {
+  BackgroundColor<<Domain>> LightBlue
+  BackgroundColor<<Aggregate>> #FFF8E1
+  BackgroundColor<<Kafka>> #FFF2CC
+  BorderColor Black
+}
+
+left to right direction
+
+rectangle "Управление пациентами" <<Domain>> {
+  rectangle "**Aggregates:**\n• Профиль пациента (корень)\n• Согласие (Consent)\n• Запись на приём" <<Aggregate>>
+}
+
+rectangle "Управление клиническими услугами" <<Domain>> {
+  rectangle "**Aggregates:**\n• EHR (корень)\n• Care Plan\n• Treatment Order" <<Aggregate>>
+}
+
+rectangle "ИИ-сервисы" <<Domain>> {
+  rectangle "**Aggregates:**\n• Результат ИИ-диагностики\n• Рекомендация\n• Объяснение решения ИИ\n• Модель ИИ" <<Aggregate>>
+}
+
+rectangle "Финтех-сервисы" <<Domain>> {
+  rectangle "**Aggregates:**\n• Банковский счёт (корень)\n• Кредит\n• Транзакция" <<Aggregate>>
+}
+
+rectangle "Управление цепочками поставок" <<Domain>> {
+  rectangle "**Aggregates:**\n• Элемент каталога препаратов\n• Поставка / заказ\n• Данные телеметрии IoT" <<Aggregate>>
+}
+
+rectangle "Управление корпоративными операциями" <<Domain>> {
+  rectangle "**Aggregates:**\n• Сотрудник\n• Ресурс клиники и расписание" <<Aggregate>>
+}
+
+rectangle "Аналитика" <<Domain>> {
+  rectangle "**Aggregates:**\n• Data Product (корень)\n• Аналитическая витрина" <<Aggregate>>
+}
+
+
+rectangle "Event Bus\n(Apache Kafka)" <<Kafka>> as Kafka
+
+
+"Управление пациентами" -down-> Kafka : PatientProfileCreated\nAppointmentBooked
+"Управление клиническими услугами" -down-> Kafka : EHRUpdated\nTreatmentOrderCreated
+"ИИ-сервисы" -down-> Kafka : AIDiagnosisCompleted\nAIRecommendationGenerated
+"Финтех-сервисы" -down-> Kafka : TransactionProcessed\nLoanApproved
+"Управление цепочками поставок" -down-> Kafka : StockLevelChanged\nSupplyOrderDelivered\nIoTTelemetryReceived
+"Управление корпоративными операциями" -down-> Kafka : StaffScheduleUpdated\nResourceBooked
+
+Kafka -down-> "ИИ-сервисы" : EHRUpdated\nTreatmentOrderCreated
+Kafka -down-> "Финтех-сервисы" : PatientProfileCreated\nTreatmentOrderCreated
+Kafka -down-> "Управление цепочками поставок" : TreatmentOrderCreated
+Kafka -down-> "Управление пациентами" : StaffScheduleUpdated
+Kafka -down-> "Управление клиническими услугами" : AIDiagnosisCompleted\nAIRecommendationGenerated\nStockLevelChanged\nSupplyOrderDelivered\nResourceBooked
+
+Kafka -down-> "Аналитика" : подписывается на все доменные события
+
+
+rectangle "Legacy DWH + ESB" as Legacy
+rectangle "Anti-Corruption Layer (ACL)" as ACL
+
+Legacy --> ACL : read-only
+ACL --> Kafka : Translated Domain Event
+
+@enduml

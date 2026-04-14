@@ -1,0 +1,103 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title «Будущее 2.0» — Целевая архитектура
+
+Person(patient, "Пациент", "[Person]", "Записывается на приём, видит историю")
+Person(doctor, "Врач", "[Person]", "Ведёт приём, использует ИИ-рекомендации")
+Person(analyst, "Аналитик", "[Person]", "Строит отчёты через self-service")
+Person(fintech_user, "Клиент банка", "[Person]", "Финтех и кредиты")
+Person(partner, "Внешний партнёр", "[Person]", "Покупает ИИ-сервисы")
+
+Container(kafka, "Apache Kafka", "Event Bus + Schema Registry")
+
+System_Boundary(patient_boundary, "1. Управление пациентами", "clinic") {
+    Container(patient_profile, "Patient Profile Service", "Java/Spring", "Единый профиль пациента")
+    Container(consent_engine, "Consent & Privacy Engine", "Go", "Согласия и приватность (152-ФЗ, GDPR)")
+    Container(communication_hub, "Communication Hub", "Node.js", "Уведомления, чат-боты, SMS/email")
+    Container(appointment, "Appointment & Scheduling Service", "Go", "Запись и расписание")
+}
+
+System_Boundary(clinical_boundary, "2. Управление клиническими услугами", "clinic") {
+    Container(ehr, "EHR Service", "Java/Spring", "Электронные медкарты (FHIR R4)")
+    Container(clinical_workflow, "Clinical Workflow Engine", "Java", "Оркестрация лечения")
+    Container(care_plan, "Care Plan Service", "Go", "Планы лечения")
+    Container(treatment_order, "Treatment Order Service", "Java", "Назначения и протоколы")
+}
+
+System_Boundary(ai_boundary, "3. ИИ-сервисы", "ai") {
+    Container(ai_diagnostics, "AI Diagnosis Core", "Python/FastAPI", "Модели ИИ")
+    Container(recommendation, "Recommendation Engine", "Python", "Медицинские и персонализированные рекомендации")
+    Container(explainability, "Explainability & Audit Service", "Python", "Объяснение решений ИИ")
+    Container(mlflow, "Model Training Pipeline", "MLflow", "Переобучение и A/B-тесты")
+    Container(ai_monetization, "AI Monetization API", "Java/Spring", "ИИ-API для внешних партнёров")
+}
+
+System_Boundary(fintech_boundary, "4. Финтех-сервисы", "fintech") {
+    Container(core_banking, "Core Banking", "Java", "Счета, транзакции")
+    Container(credit_engine, "Loan & Credit Engine", "Go", "Кредиты и скоринг")
+    Container(transaction_processor, "Transaction Processor", "Go", "Реал-тайм транзакции")
+}
+
+System_Boundary(supply_boundary, "5. Управление цепочками поставок", "pharma") {
+    Container(pharma_catalog, "Pharma Catalog", "Go", "Реестр препаратов")
+    Container(supply_chain, "Supply Chain Tracker", "Go", "Логистика и поставки")
+    Container(iot_gateway, "IoT Device Gateway", "MQTT/Go", "Телеметрия оборудования")
+}
+
+System_Boundary(corporate_boundary, "6. Управление корпоративными операциями", "corporate") {
+    Container(hr_staff, "HR & Staff Management", "Java", "Сотрудники и расписание")
+    Container(resource_scheduler, "Clinic Resource Scheduler", "Go", "Ресурсы клиник")
+}
+
+System_Boundary(analytics_boundary, "7. Аналитика") {
+    Container(lakehouse, "Data Lakehouse", "ClickHouse + S3 + Iceberg", "Raw → Silver → Gold")
+    Container(catalog, "Data Product Catalog", "Apache Atlas", "Каталог data products")
+    Container(stream_pipeline, "Stream Processing Pipeline", "Apache Flink", "Near-real-time агрегация")
+    Container(self_service_portal, "Self-Service Витрина", "React + Superset/Metabase", "Отчёты, дашборды, low-code")
+}
+
+System_Boundary(platform_boundary, "8. Платформенные сервисы", "data_platform") {
+    Container(acl, "Anti-Corruption Layer", "Java Adapter", "Только переходный период")
+    Container(iam, "IAM & Zero-Trust", "Keycloak / Ory", "Auth, mTLS, RBAC")
+    Container(observability, "Observability Platform", "Prometheus + Grafana + Jaeger", "")
+}
+
+System_Boundary(legacy_boundary, "Legacy системы") {
+    Container(legacy_dwh, "DWH SQL Server 2008", "Legacy", "Только чтение исторических данных")
+    Container(legacy_esb, "ESB Apache Camel", "Legacy", "Старые интеграции")
+}
+
+Rel(patient, appointment, "запрашивает запись")
+Rel(doctor, ehr, "работает с картой")
+Rel(doctor, recommendation, "получает рекомендации")
+
+Rel(analyst, self_service_portal, "строит отчёты")
+Rel(fintech_user, core_banking, "использует финтех")
+Rel(partner, ai_monetization, "использует ИИ API")
+
+Rel_U(ehr, kafka, "публикует события")
+Rel_U(clinical_workflow, kafka, "публикует события")
+
+Rel_D(ai_diagnostics, kafka, "принимает данные")
+Rel_D(recommendation, kafka, "принимает данные")
+
+Rel(credit_engine, kafka, "принимает данные")
+Rel(iot_gateway, kafka, "публикует телеметрию")
+
+Rel(kafka, lakehouse, "передаёт события")
+Rel(stream_pipeline, lakehouse, "обогащает данные")
+Rel(self_service_portal, lakehouse, "запрашивает данные")
+
+Rel(resource_scheduler, appointment, "синхронизирует ресурсы")
+Rel(hr_staff, clinical_workflow, "предоставляет график")
+Rel(resource_scheduler, kafka, "публикует ресурсы")
+Rel(hr_staff, kafka, "публикует сотрудников")
+
+Rel(legacy_dwh, acl, "читает данные")
+Rel(acl, kafka, "публикует события")
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+@enduml

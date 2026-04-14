@@ -1,0 +1,148 @@
+@startuml event-storming
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam ArrowColor #2C3E50
+skinparam ArrowThickness 1.5
+skinparam nodesep 30
+skinparam ranksep 50
+
+top to bottom direction
+
+' ===================== SWIMLANES =====================
+
+rectangle "**Управление пациентами**" as lane_patient #DAE8FC {
+  rectangle "Зарегистрировать пациента\n[Command]" as cmd_reg #6BA3BE
+  rectangle "Профиль пациента\n[Aggregate]" as agg_patient #F9E79F
+  rectangle "**PatientProfileCreated**\n[Event]" as evt_profile #E67E22
+  rectangle "**PatientProfileUpdated**\n[Event]" as evt_profile_upd #E67E22
+  rectangle "Записать на приём\n[Command]" as cmd_book #6BA3BE
+  rectangle "Запись на приём\n[Aggregate]" as agg_appt #F9E79F
+  rectangle "**AppointmentBooked**\n[Event]" as evt_booked #E67E22
+  rectangle "**AppointmentCompleted**\n[Event]" as evt_completed #E67E22
+
+  cmd_reg --> agg_patient
+  agg_patient --> evt_profile
+  agg_patient --> evt_profile_upd
+  cmd_book --> agg_appt
+  agg_appt --> evt_booked
+}
+
+rectangle "**Управление клиническими услугами**" as lane_clinic #DAE8FC {
+  rectangle "Создать назначение лечения\n[Command]" as cmd_order #6BA3BE
+  rectangle "Электронная медицинская карта\n[Aggregate]" as agg_ehr #F9E79F
+  rectangle "**EHRUpdated**\n[Event]" as evt_ehr #E67E22
+  rectangle "**TreatmentOrderCreated**\n[Event]" as evt_order #E67E22
+  rectangle "Завершить приём\n[Command]" as cmd_visit #6BA3BE
+  rectangle "**ClinicalVisitCompleted**\n[Event]" as evt_visit #E67E22
+
+  cmd_order --> agg_ehr
+  agg_ehr --> evt_ehr
+  agg_ehr --> evt_order
+  cmd_visit --> agg_ehr
+  agg_ehr --> evt_visit
+}
+
+rectangle "**ИИ-сервисы**" as lane_ai #DAE8FC {
+  rectangle "Реакция: при TreatmentOrderCreated / EHRUpdated\n→ Запросить анализ ИИ" as pol_ai #CE93D8
+  rectangle "Запросить анализ ИИ\n[Command]" as cmd_ai #6BA3BE
+  rectangle "Результат ИИ-диагностики\n[Aggregate]" as agg_ai #F9E79F
+  rectangle "**AIDiagnosisCompleted**\n[Event]" as evt_ai_done #E67E22
+  rectangle "**AIRecommendationGenerated**\n[Event]" as evt_ai_rec #E67E22
+
+  pol_ai --> cmd_ai
+  cmd_ai --> agg_ai
+  agg_ai --> evt_ai_done
+  evt_ai_done --> evt_ai_rec
+}
+
+rectangle "**Финтех-сервисы**" as lane_fintech #DAE8FC {
+  rectangle "Реакция: при PatientProfileCreated\n→ Открыть счёт / Подать заявку на кредит" as pol_f #CE93D8
+  rectangle "Открыть банковский счёт\n[Command]" as cmd_acc #6BA3BE
+  rectangle "Банковский счёт\n[Aggregate]" as agg_acc #F9E79F
+  rectangle "**TransactionProcessed**\n[Event]" as evt_tx #E67E22
+  rectangle "Подать заявку на кредит\n[Command]" as cmd_credit #6BA3BE
+  rectangle "Кредит\n[Aggregate]" as agg_credit #F9E79F
+  rectangle "**LoanApproved / LoanRejected**\n[Event]" as evt_loan #E67E22
+
+  pol_f --> cmd_acc
+  cmd_acc --> agg_acc
+  agg_acc --> evt_tx
+  cmd_credit --> agg_credit
+  agg_credit --> evt_loan
+}
+
+rectangle "**Управление цепочками поставок**" as lane_supply #DAE8FC {
+  rectangle "Реакция: при TreatmentOrderCreated\n→ Разместить заказ на поставку" as pol_supply #CE93D8
+  rectangle "Разместить заказ на поставку\n[Command]" as cmd_supply #6BA3BE
+  rectangle "Поставка / заказ\n[Aggregate]" as agg_supply #F9E79F
+  rectangle "**SupplyOrderDelivered**\n[Event]" as evt_supply #E67E22
+  rectangle "**PharmaStockLevelChanged**\n[Event]" as evt_stock #E67E22
+  rectangle "**IoTTelemetryReceived**\n[Event]" as evt_iot #E67E22
+
+  pol_supply --> cmd_supply
+  cmd_supply --> agg_supply
+  agg_supply --> evt_supply
+  agg_supply --> evt_stock
+  agg_supply --> evt_iot
+}
+
+rectangle "**Управление корпоративными операциями**" as lane_corp #DAE8FC {
+  rectangle "Забронировать ресурс\n[Command]" as cmd_res #6BA3BE
+  rectangle "Ресурс клиники и расписание\n[Aggregate]" as agg_res #F9E79F
+  rectangle "**ResourceBooked**\n[Event]" as evt_res #E67E22
+  rectangle "**StaffScheduleUpdated**\n[Event]" as evt_staff #E67E22
+
+  cmd_res --> agg_res
+  agg_res --> evt_res
+  agg_res --> evt_staff
+}
+
+rectangle "**Аналитика (Data Platform)**\n(универсальный подписчик)" as lane_data #DAE8FC {
+  rectangle "Self-Service Витрина\n[Read Model]" as rm_portal #90EE90
+  rectangle "**ReportGenerated**\n[Event]" as evt_report #E67E22
+}
+
+' ===================== KAFKA BUS =====================
+rectangle "⚡ KAFKA EVENT BUS" as kafka_bus #FFF2CC
+
+' ===================== ПОТОКИ =====================
+evt_profile --> kafka_bus
+evt_profile_upd --> kafka_bus
+evt_booked --> kafka_bus
+evt_completed --> kafka_bus
+evt_ehr --> kafka_bus
+evt_order --> kafka_bus
+evt_visit --> kafka_bus
+evt_ai_done --> kafka_bus
+evt_ai_rec --> kafka_bus
+evt_tx --> kafka_bus
+evt_loan --> kafka_bus
+evt_supply --> kafka_bus
+evt_stock --> kafka_bus
+evt_iot --> kafka_bus
+evt_res --> kafka_bus
+evt_staff --> kafka_bus
+
+kafka_bus --> pol_ai : TreatmentOrderCreated\nEHRUpdated
+kafka_bus --> pol_f : PatientProfileCreated
+kafka_bus --> pol_supply : TreatmentOrderCreated
+kafka_bus --> lane_corp : ResourceBooked
+
+kafka_bus --> rm_portal : **ВСЕ** доменные события\n(анонимизированные, без PHI)
+
+' Legacy
+rectangle "Legacy DWH + ESB" as legacy #FFE6CC
+legacy --> kafka_bus : ACL Bridge
+
+legend left
+  <back:#6BA3BE><color:#FFFFFF> Command </color></back>
+  <back:#F9E79F> Aggregate </back>
+  <back:#E67E22><color:#FFFFFF> Domain Event </color></back>
+  <back:#CE93D8> Реакция </back>
+  <back:#90EE90> Read Model </back>
+endlegend
+
+@enduml
