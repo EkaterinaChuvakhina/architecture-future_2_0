@@ -1,0 +1,60 @@
+name: Terraform CI/CD — Yandex Object Storage
+
+on:
+  push:
+    branches: [ main, future_2_0 ]
+  pull_request:
+    branches: [ main, future_2_0 ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Какое окружение развернуть?'
+        required: true
+        type: choice
+        options:
+          - dev
+          - stage
+          - prod
+        default: 'dev'
+
+jobs:
+  terraform:
+    name: Terraform ${{ inputs.environment || 'dev' }}
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Task2Advanced/envs/${{ inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+
+      - name: Terraform Init
+        run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.YANDEX_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Format & Validate
+        run: |
+          terraform fmt -check
+          terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=${{ inputs.environment || 'dev' }}.tfvars
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.YANDEX_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Apply (только вручную)
+        if: github.event_name == 'workflow_dispatch'
+        run: terraform apply -auto-approve -var-file=${{ inputs.environment || 'dev' }}.tfvars
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.YANDEX_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
