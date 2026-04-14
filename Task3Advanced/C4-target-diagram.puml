@@ -82,7 +82,6 @@ Rel_U(clinical_workflow, kafka, "публикует события")
 Rel_D(ai_diagnostics, kafka, "принимает данные")
 Rel_D(recommendation, kafka, "принимает данные")
 
-Rel(ai_monetization, kafka, "обменивается ai.*")
 Rel(credit_engine, kafka, "принимает данные")
 Rel(iot_gateway, kafka, "публикует телеметрию")
 

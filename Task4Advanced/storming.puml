@@ -1,0 +1,86 @@
+@startuml
+title Будущее 2.0 — Доменная событийная архитектура
+title (агрегаты внутри доменов + ключевые Domain Events между доменами)
+
+skinparam rectangle {
+  BackgroundColor<<Domain>> #E1F0FF
+  BorderColor<<Domain>> #2C6E9C
+  BackgroundColor<<Aggregate>> #FFF8E1
+  BorderColor<<Aggregate>> #D9A22B
+}
+
+left to right direction
+
+' ==================== ДОМЕНЫ С АГРЕГАТАМИ ====================
+
+rectangle "Управление пациентами" <<Domain>> {
+  rectangle "Профиль пациента" <<Aggregate>>
+  rectangle "Согласие (Consent)" <<Aggregate>>
+  rectangle "Запись на приём" <<Aggregate>>
+}
+
+rectangle "Управление клиническими услугами" <<Domain>> {
+  rectangle "Электронная медицинская карта (EHR)" <<Aggregate>>
+  rectangle "План лечения (Care Plan)" <<Aggregate>>
+  rectangle "Назначение лечения (Treatment Order)" <<Aggregate>>
+}
+
+rectangle "ИИ-сервисы" <<Domain>> {
+  rectangle "Результат ИИ-диагностики" <<Aggregate>>
+  rectangle "Рекомендация" <<Aggregate>>
+  rectangle "Объяснение решения ИИ" <<Aggregate>>
+  rectangle "Модель ИИ" <<Aggregate>>
+}
+
+rectangle "Финтех-сервисы" <<Domain>> {
+  rectangle "Банковский счёт" <<Aggregate>>
+  rectangle "Кредит" <<Aggregate>>
+  rectangle "Транзакция" <<Aggregate>>
+}
+
+rectangle "Управление цепочками поставок" <<Domain>> {
+  rectangle "Элемент каталога препаратов" <<Aggregate>>
+  rectangle "Поставка / заказ" <<Aggregate>>
+  rectangle "Данные телеметрии IoT" <<Aggregate>>
+}
+
+rectangle "Управление корпоративными операциями" <<Domain>> {
+  rectangle "Сотрудник" <<Aggregate>>
+  rectangle "Ресурс клиники и расписание" <<Aggregate>>
+}
+
+rectangle "Аналитика" <<Domain>> {
+  rectangle "Data Product" <<Aggregate>>
+  rectangle "Аналитическая витрина (Silver/Gold)" <<Aggregate>>
+}
+
+' ==================== КЛЮЧЕВЫЕ СОБЫТИЯ МЕЖДУ ДОМЕНАМИ ====================
+
+' Пациенты → остальные
+"Управление пациентами" --> "Управление клиническими услугами" : PatientProfileCreated\nAppointmentBooked
+"Управление пациентами" --> "Финтех-сервисы" : PatientProfileCreated
+"Управление пациентами" --> "Аналитика" : PatientProfileCreated\nAppointmentCompleted
+
+' Клинические услуги → остальные
+"Управление клиническими услугами" --> "ИИ-сервисы" : EHRUpdated\nTreatmentOrderCreated
+"Управление клиническими услугами" --> "Финтех-сервисы" : TreatmentOrderCreated
+"Управление клиническими услугами" --> "Управление цепочками поставок" : TreatmentOrderCreated
+"Управление клиническими услугами" --> "Аналитика" : CarePlanUpdated\nTreatmentOrderCreated
+
+' ИИ → клинические + аналитика
+"ИИ-сервисы" --> "Управление клиническими услугами" : AIDiagnosisCompleted\n AIRecommendationGenerated
+"ИИ-сервисы" --> "Аналитика" : AIRecommendationGenerated\nModelRetrained
+
+' Корпоративные операции → пациенты и клинические
+"Управление корпоративными операциями" --> "Управление пациентами" : StaffScheduleUpdated
+"Управление корпоративными операциями" --> "Управление клиническими услугами" : ResourceBooked
+
+' Цепочки поставок → клинические + аналитика
+"Управление цепочками поставок" --> "Управление клиническими услугами" : StockLevelChanged\nSupplyOrderDelivered
+"Управление цепочками поставок" --> "Аналитика" : IoTTelemetryReceived
+
+' Финтех → аналитика
+"Финтех-сервисы" --> "Аналитика" : TransactionProcessed\nLoanApproved
+
+
+@enduml
