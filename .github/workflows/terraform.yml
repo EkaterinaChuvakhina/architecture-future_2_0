@@ -40,17 +40,24 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID:     ${{ secrets.YANDEX_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
+          TF_VAR_token:          ${{ secrets.YC_IAM_TOKEN }}
+          TF_VAR_ssh_key:        ${{ secrets.SSH_KEY }}
 
       - name: Terraform Format & Validate
         run: |
           terraform fmt -check
           terraform validate
+        env:
+          TF_VAR_token:   ${{ secrets.YC_IAM_TOKEN }}
+          TF_VAR_ssh_key: ${{ secrets.SSH_KEY }}
 
       - name: Terraform Plan
         run: terraform plan -var-file=${{ inputs.environment || 'dev' }}.tfvars
         env:
           AWS_ACCESS_KEY_ID:     ${{ secrets.YANDEX_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
+          TF_VAR_token:          ${{ secrets.YC_IAM_TOKEN }}
+          TF_VAR_ssh_key:        ${{ secrets.SSH_KEY }}
 
       - name: Terraform Apply (только вручную)
         if: github.event_name == 'workflow_dispatch'
@@ -58,3 +65,5 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID:     ${{ secrets.YANDEX_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
+          TF_VAR_token:          ${{ secrets.YC_IAM_TOKEN }}
+          TF_VAR_ssh_key:        ${{ secrets.SSH_KEY }}
