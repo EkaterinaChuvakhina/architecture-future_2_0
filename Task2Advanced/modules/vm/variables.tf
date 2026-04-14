@@ -29,6 +29,7 @@ variable "subnet_id" {
 variable "ssh_key" {
   description = "Публичный SSH-ключ для пользователя ubuntu"
   type        = string
+  sensitive   = true
 }
 
 variable "zone" {
