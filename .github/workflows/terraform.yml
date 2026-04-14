@@ -2,9 +2,9 @@ name: Terraform CI/CD — Yandex Object Storage
 
 on:
   push:
-    branches: [main, future_2_0]          # ← замени develop на название своей ветки
+    branches: [ main, future_2_0 ]
   pull_request:
-    branches: [main, future_2_0]          # ← то же самое
+    branches: [ main, future_2_0 ]
   workflow_dispatch:
     inputs:
       environment:
@@ -21,6 +21,7 @@ jobs:
   terraform:
     name: Terraform ${{ inputs.environment || 'dev' }}
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: Task2Advanced/envs/${{ inputs.environment || 'dev' }}
@@ -51,9 +52,9 @@ jobs:
           AWS_ACCESS_KEY_ID:     ${{ secrets.YANDEX_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
 
-      - name: Terraform Apply (только по кнопке)
+      - name: Terraform Apply (только вручную)
         if: github.event_name == 'workflow_dispatch'
-        run: terraform apply -var-file=${{ inputs.environment || 'dev' }}.tfvars
+        run: terraform apply -auto-approve -var-file=${{ inputs.environment || 'dev' }}.tfvars
         env:
           AWS_ACCESS_KEY_ID:     ${{ secrets.YANDEX_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
